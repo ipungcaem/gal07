@@ -1,0 +1,11 @@
+[package]
+name = "gal"
+version = "0.1.0"
+authors = ["Ranxi Verba <ranxi.verba@gmail.com>"]
+edition = "2018"
+license = "MIT"
+repository = "https://github.com/vlad9486/gal"
+description = "tensor calculator"
+
+[dependencies.generic-array]
+version = "0.12"
