@@ -82,6 +82,20 @@ where
     }
 }
 
+impl<Scalar, Base, Size, Kind> Default for Vector<Scalar, Base, Size, Kind>
+where
+    Scalar: Magma,
+    Base: Float<Scalar> + Default,
+    Size: ArrayLength<Base>,
+    Kind: VariantKind,
+{
+    fn default() -> Self {
+        use core::iter;
+
+        iter::repeat(Base::default()).collect()
+    }
+}
+
 impl<Scalar, Base, Size, Kind> Add<Self> for Vector<Scalar, Base, Size, Kind>
 where
     Scalar: Magma,
