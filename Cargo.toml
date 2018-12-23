@@ -9,3 +9,6 @@ description = "tensor calculator"
 
 [dependencies.generic-array]
 version = "0.12"
+
+[dev-dependencies.rand]
+version = "0.6"

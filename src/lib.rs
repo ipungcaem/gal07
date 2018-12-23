@@ -2,16 +2,16 @@
 #![forbid(unsafe_code)]
 #![allow(non_shorthand_field_patterns)]
 
-use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-use core::marker::PhantomData;
 use core::iter::{FromIterator, IntoIterator};
+use core::marker::PhantomData;
+use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use core::slice::{Iter, IterMut};
 
 use generic_array::{ArrayLength, GenericArray};
 
 pub trait Magma
 where
-    Self: Clone + Mul<Self, Output=Self>,
+    Self: Clone + Mul<Self, Output = Self>,
 {
 }
 
@@ -335,9 +335,78 @@ extern crate std;
 
 #[cfg(test)]
 #[allow(unused_imports)]
-mod test {
+mod tests {
     use super::{Column, Contravariant, Covariant, Float, Row, VariantKind, Vector};
     use generic_array::typenum::*;
+
+    pub mod tools {
+        use super::super::{Float, Magma, VariantKind, Vector};
+        use core::ops::Neg;
+        use generic_array::typenum::*;
+
+        pub trait Zero {
+            fn zero() -> Self;
+        }
+
+        pub trait One {
+            fn one() -> Self;
+        }
+
+        impl Zero for f32 {
+            fn zero() -> Self {
+                0.0
+            }
+        }
+
+        impl One for f32 {
+            fn one() -> Self {
+                1.0
+            }
+        }
+
+        // three dimensional Levi-Civita symbol
+        pub fn e3<S, V>() -> Vector<S, Vector<S, Vector<S, S, U3, V>, U3, V>, U3, V>
+        where
+            V: VariantKind,
+            S: Float<S> + Magma + Zero + One + Neg<Output = S>,
+        {
+            (0..3)
+                .map(|i| {
+                    (0..3)
+                        .map(|j| {
+                            (0..3)
+                                .map(|k| {
+                                    if i == j || j == k || k == i {
+                                        S::zero()
+                                    } else {
+                                        if (i + 1) % 3 == j {
+                                            S::one()
+                                        } else {
+                                            -S::one()
+                                        }
+                                    }
+                                })
+                                .collect()
+                        })
+                        .collect()
+                })
+                .collect()
+        }
+
+        pub fn metric3<S, V>() -> Vector<S, Vector<S, S, U3, V>, U3, V>
+        where
+            V: VariantKind,
+            S: Float<S> + Magma + Zero + One,
+        {
+            (0..3)
+                .map(|i| {
+                    (0..3)
+                        .map(|j| if i == j { S::one() } else { S::zero() })
+                        .collect()
+                })
+                .collect()
+        }
+    }
 
     #[test]
     fn test() {
@@ -345,5 +414,41 @@ mod test {
         let c: Column<f32, U3> = (0..3).map(|i| 0.4_f32 * (i as f32)).collect();
         let g = r.clone().append::<_, U3>(c.clone());
         assert_eq!(r.inner(c), g.trace())
+    }
+
+    #[test]
+    fn square() {
+        use rand::Rng;
+        use self::tools;
+
+        let e = tools::e3::<f32, Covariant>();
+
+        let mut rng = rand::thread_rng();
+        let a: Column<f32, U3> = [3.0 + rng.gen::<f32>(), 4.0 + rng.gen::<f32>(), 0.0]
+            .iter()
+            .map(Clone::clone)
+            .collect();
+        let b: Column<f32, U3> = [-3.0 + rng.gen::<f32>(), 4.0 + rng.gen::<f32>(), 0.0]
+            .iter()
+            .map(Clone::clone)
+            .collect();
+
+        // cross product
+        let cross = e.inner(a.clone()).inner(b.clone());
+        let cross_up = tools::metric3::<f32, Contravariant>().inner(cross.clone());
+        // square
+        let sq = cross_up.inner(cross).abs().sqrt() / 2.0;
+
+        let c = a.clone() - b.clone();
+
+        let la = tools::metric3::<f32, Covariant>().inner(a.clone()).inner(a).sqrt();
+        let lb = tools::metric3::<f32, Covariant>().inner(b.clone()).inner(b).sqrt();
+        let lc = tools::metric3::<f32, Covariant>().inner(c.clone()).inner(c).sqrt();
+
+        let p = (la + lb + lc) / 2.0;
+        let sq_g = (p * (p - la) * (p - lb) * (p - lc)).sqrt();
+
+        let r = (sq - sq_g) / sq;
+        assert!(r < 1e-6);
     }
 }
