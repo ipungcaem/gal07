@@ -43,7 +43,7 @@ impl Galois for GF7 {
     const M: Self::Inner = 7;
 
     fn from(v: Self::Inner) -> Self {
-        GF7(v)
+        GF7(v % Self::M)
     }
 
     fn into(self) -> Self::Inner {
