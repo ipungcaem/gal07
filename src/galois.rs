@@ -1,5 +1,7 @@
-use core::ops::Rem;
+use core::ops::{Rem, Add, Neg, Sub, Mul};
+use core::fmt;
 use super::tensor::{Magma, Float};
+use super::cayley::{Zero, Conjugate};
 
 pub trait Field
 where
@@ -28,7 +30,7 @@ where
     }
 
     fn sub(self, rhs: Self) -> Self {
-        Self::from((self.into() - rhs.into()) % Self::M)
+        Self::from((self.into() - rhs.into() + Self::M) % Self::M)
     }
 
     fn mul(self, rhs: Self) -> Self;
@@ -36,6 +38,7 @@ where
     fn inv(self) -> Self;
 }
 
+#[derive(Clone, Eq, PartialEq)]
 pub struct GF7(i8);
 
 impl Galois for GF7 {
@@ -56,7 +59,7 @@ impl Galois for GF7 {
     }
 
     fn div(self, rhs: Self) -> Self {
-        self.mul(rhs.inv())
+        Galois::mul(self, rhs.inv())
     }
 
     fn inv(self) -> Self {
@@ -70,5 +73,53 @@ impl Galois for GF7 {
             GF7(6) => GF7(6),
             t @ _ => t,
         }
+    }
+}
+
+impl fmt::Debug for GF7 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self { &GF7(ref i) => write!(f, "{:?}", i) }
+    }
+}
+
+impl Zero for GF7 {
+    const ZERO: Self = GF7(0);
+}
+
+impl Mul<Self> for GF7 {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self {
+        Galois::mul(self, rhs)
+    }
+}
+
+impl Add<Self> for GF7 {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        Galois::add(self, rhs)
+    }
+}
+
+impl Neg for GF7 {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Galois::sub(Self::ZERO, self)
+    }
+}
+
+impl Sub<Self> for GF7 {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        Galois::sub(self, rhs)
+    }
+}
+
+impl Conjugate for GF7 {
+    fn conjugate(self) -> Self {
+        self
     }
 }

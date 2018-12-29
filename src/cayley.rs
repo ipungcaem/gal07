@@ -1,9 +1,52 @@
 use core::ops::{Add, AddAssign, Neg, Sub, SubAssign, Mul, MulAssign};
+use core::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct CayleyPair<T> {
     a: T,
     b: T,
+}
+
+impl<T> fmt::Debug for CayleyPair<T>
+where
+    T: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({:?}, {:?})", self.a, self.b)
+    }
+}
+
+pub trait Zero {
+    const ZERO: Self;
+}
+
+impl<T> Zero for CayleyPair<T>
+where
+    T: Zero,
+{
+    const ZERO: Self = CayleyPair {
+        a: T::ZERO,
+        b: T::ZERO,
+    };
+}
+
+impl<T> CayleyPair<T>
+where
+    T: Zero,
+{
+    pub fn real(x: T) -> Self {
+        CayleyPair {
+            a: x,
+            b: T::ZERO,
+        }
+    }
+
+    pub fn imagine(x: T) -> Self {
+        CayleyPair {
+            a: T::ZERO,
+            b: x,
+        }
+    }
 }
 
 pub trait Conjugate {
@@ -89,7 +132,7 @@ where
 
     fn mul(self, rhs: Self) -> Self::Output {
         let self_c = self.clone();
-        let rhs_c = self.clone();
+        let rhs_c = rhs.clone();
         CayleyPair {
             a: self.a * rhs.a - rhs.b.conjugate() * self.b,
             b: rhs_c.b * self_c.a + self_c.b * rhs_c.a.conjugate(),

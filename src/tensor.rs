@@ -326,10 +326,6 @@ pub type Row<Scalar, Size> = Vector<Scalar, Scalar, Size, Covariant>;
 pub type Column<Scalar, Size> = Vector<Scalar, Scalar, Size, Contravariant>;
 
 #[cfg(test)]
-#[macro_use]
-extern crate std;
-
-#[cfg(test)]
 #[allow(unused_imports)]
 mod tests {
     use super::{Column, Contravariant, Covariant, Float, Row, VariantKind, Vector};
