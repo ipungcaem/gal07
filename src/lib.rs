@@ -19,7 +19,7 @@ mod tests {
     fn octonion() {
         let a = CayleyPair::real(CayleyPair::imagine(CayleyPair::real(<GF7 as Galois>::from(3))));
         let b = CayleyPair::real(CayleyPair::real(CayleyPair::imagine(<GF7 as Galois>::from(4))));
-        let c = a * b;
-        assert_eq!(c, CayleyPair::real(CayleyPair::imagine(CayleyPair::imagine(<GF7 as Galois>::from(2)))));
+        let c = CayleyPair::real(CayleyPair::imagine(CayleyPair::imagine(<GF7 as Galois>::from(2))));
+        assert_eq!(c, a * b);
     }
 }
